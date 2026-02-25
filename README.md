@@ -2,8 +2,15 @@
 
 A **web-based version control system** that simulates core Git functionality, built from scratch using fundamental **Data Structures & Algorithms**.
 
-[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://mini-git-dsa.onrender.com/)
-[![Built With](https://img.shields.io/badge/FastAPI-Docs-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://mini-git-dsa.onrender.com/docs)
+<p align="center">
+  <a href="https://mini-git-dsa.onrender.com/">
+    <img src="https://img.shields.io/badge/🚀_Live_Demo-Render-000000?style=for-the-badge&logo=render&logoColor=white" alt="Live Demo"/>
+  </a>
+  <br/>
+  <a href="https://mini-git-dsa.onrender.com/docs">
+    <img src="https://img.shields.io/badge/FastAPI-Docs-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="API Docs"/>
+  </a>
+</p>
 
 ---
 
