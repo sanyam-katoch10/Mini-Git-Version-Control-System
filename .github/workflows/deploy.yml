@@ -1,0 +1,27 @@
+name: Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub Deployment
+        uses: chrnorm/deployment-action@v2
+        id: deployment
+        with:
+          token: ${{ github.token }}
+          environment-url: https://mini-git-dsa.onrender.com/
+          environment: production
+
+      - name: Update deployment status (success)
+        if: success()
+        uses: chrnorm/deployment-action@v2
+        with:
+          token: ${{ github.token }}
+          environment-url: https://mini-git-dsa.onrender.com/
+          state: success
+          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
