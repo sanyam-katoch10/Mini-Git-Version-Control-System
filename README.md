@@ -2,8 +2,8 @@
 
 A **web-based version control system** that simulates core Git functionality, built from scratch using fundamental **Data Structures & Algorithms**.
 
-[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-mini--git--dsa.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://mini-git-dsa.vercel.app/)
-[![Built With](https://img.shields.io/badge/FastAPI_+_Vanilla_JS-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://mini-git-dsa.vercel.app/docs)
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://mini-git-dsa.onrender.com/)
+[![Built With](https://img.shields.io/badge/FastAPI-Docs-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://mini-git-dsa.onrender.com/docs)
 
 ---
 
@@ -84,7 +84,7 @@ A **web-based version control system** that simulates core Git functionality, bu
 | Backend | Python, FastAPI, Uvicorn |
 | Frontend | HTML5, CSS3, Vanilla JavaScript |
 | Persistence | JSON file storage |
-| Deployment | Railway / Render |
+| Deployment | Render |
 
 ---
 
@@ -111,7 +111,6 @@ minigit-api/
 ├── storage.py         # JSON persistence layer
 ├── requirements.txt   # Python dependencies
 ├── Procfile           # Deployment start command
-├── runtime.txt        # Python version
 └── static/
     ├── index.html     # Terminal UI
     ├── style.css      # Dark theme styling
