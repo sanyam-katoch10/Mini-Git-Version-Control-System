@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniGit — Version Control System</title>
+    <meta name="description"
+        content="MiniGit — Web-based version control using DSA: Tree, Stack, LinkedList, Hash, Recursion, Array, Backtracking">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">⎇ Mini<span>Git</span> <small>v1.0</small></div>
+        <div class="badges">
+            <span class="badge"> Tree</span>
+            <span class="badge">Stack</span>
+            <span class="badge"> LinkedList</span>
+            <span class="badge">Hash</span>
+            <span class="badge"> Recursion</span>
+            <span class="badge"> Array</span>
+            <span class="badge"> Backtracking</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="sidebar">
+            <div class="card">
+                <h3>⎇ Branches</h3>
+                <ul id="branchList">
+                    <li class="muted">Run init to start</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>◉ Commits</h3>
+                <div id="commitGraph" class="commit-list">
+                    <p class="muted">No commits yet</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="terminal-wrap">
+            <div class="terminal-bar">
+                <span class="dots"><i></i><i></i><i></i></span>
+                <span>minigit terminal</span>
+                <button id="clearBtn" title="Clear">⌫</button>
+            </div>
+            <div class="terminal" id="terminal">
+                <pre class="welcome">╔═══════════════════════════════════════╗
+║          M I N I   G I T              ║
+║     Version Control System v1.0       ║
+║                                       ║
+║  DSA: Tree │ Stack │ LinkedList       ║
+║       Hash │ Recursion │ Array        ║
+║       Backtracking                    ║
+╚═══════════════════════════════════════╝
+
+Type 'help' for commands.</pre>
+            </div>
+            <div class="input-row">
+                <span class="prompt"><span id="promptBranch">~</span> ❯</span>
+                <input type="text" id="input" placeholder="Enter command..." autocomplete="off" spellcheck="false">
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="card">
+                <h3> Working Files</h3>
+                <div id="fileList">
+                    <p class="muted">No files</p>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Status</h3>
+                <div class="stat-grid">
+                    <span>Branch</span><span id="sBranch">—</span>
+                    <span>Staged</span><span id="sStaged">0</span>
+                    <span>Files</span><span id="sFiles">0</span>
+                    <span>Undo</span><span id="sUndo">0</span>
+                    <span>Redo</span><span id="sRedo">0</span>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Quick</h3>
+                <div class="actions">
+                    <button onclick="run('init')">Init</button>
+                    <button onclick="run('status')">Status</button>
+                    <button onclick="run('log')">Log</button>
+                    <button onclick="run('branches')">Branches</button>
+                    <button onclick="run('undo')">Undo</button>
+                    <button onclick="run('redo')">Redo</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>
