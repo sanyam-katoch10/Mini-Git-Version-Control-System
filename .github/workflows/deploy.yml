@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   deployments: write
   contents: read
+  statuses: write
 
 jobs:
   deploy:
@@ -20,12 +22,5 @@ jobs:
           token: ${{ github.token }}
           environment-url: https://mini-git-dsa.onrender.com/
           environment: production
-
-      - name: Update deployment status (success)
-        if: success()
-        uses: chrnorm/deployment-action@v2
-        with:
-          token: ${{ github.token }}
-          environment-url: https://mini-git-dsa.onrender.com/
-          state: success
-          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
+          initial-status: success
+          description: "deployment on Render"
