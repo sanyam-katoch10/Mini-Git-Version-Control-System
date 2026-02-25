@@ -375,7 +375,6 @@ def revert(req: RevertRequest):
 
 @app.post("/api/reset")
 def reset_repo():
-    """Reset the entire repository state (useful for testing)."""
     global git
     git = MiniGitState()
     save_data([])

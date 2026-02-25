@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
-# ── Pydantic Request/Response Models ──────────────────────────────────
 
 class AddRequest(BaseModel):
     filename: str
@@ -28,10 +27,8 @@ class DiffRequest(BaseModel):
     filename: str
 
 
-# ── DSA Core Data Structures ─────────────────────────────────────────
-
 class File:
-    """Simple file representation (name + content)."""
+
     def __init__(self, name: str, content: str):
         self.name = name
         self.content = content
@@ -41,7 +38,7 @@ class File:
 
 
 class FileState:
-    """Array-based file storage (mirrors C++ fixed-size array approach)."""
+
     def __init__(self):
         self.files: List[File] = []
 
@@ -75,10 +72,9 @@ class FileState:
         return [f.to_dict() for f in self.files]
 
 
-# ── Hashing ───────────────────────────────────────────────────────────
 
 def generate_hash(data: str) -> str:
-    """Custom hash function (port of C++ version — polynomial rolling hash)."""
+
     h = 0
     for ch in data:
         h = h * 31 + ord(ch)
@@ -98,10 +94,8 @@ def get_timestamp() -> str:
     return datetime.now().strftime("%a %b %d %H:%M:%S %Y")
 
 
-# ── Commit Tree Node ─────────────────────────────────────────────────
-
 class Commit:
-    """Tree node — each commit points to parent + children (branching)."""
+
     def __init__(self, commit_id: str, message: str):
         self.commit_id = commit_id
         self.message = message
@@ -122,10 +116,9 @@ class Commit:
         }
 
 
-# ── Stack (Undo / Redo) ──────────────────────────────────────────────
 
 class CommitStack:
-    """Custom stack implementation for undo/redo operations."""
+
     def __init__(self):
         self._data: List[Commit] = []
 
@@ -152,10 +145,9 @@ class CommitStack:
         self._data.clear()
 
 
-# ── Branch (Linked List Node) ────────────────────────────────────────
 
 class Branch:
-    """Linked list node — each branch has a name, head commit, and next pointer."""
+
     def __init__(self, name: str, head: Optional[Commit] = None):
         self.name = name
         self.head = head
@@ -163,7 +155,7 @@ class Branch:
 
 
 class BranchList:
-    """Linked list of branches with an active branch pointer."""
+
     def __init__(self):
         self.first: Optional[Branch] = None
         self.active: Optional[Branch] = None
@@ -232,17 +224,16 @@ class BranchList:
         return result
 
 
-# ── Recursive / Backtracking Helpers ─────────────────────────────────
 
 def count_commits(node: Optional[Commit]) -> int:
-    """Recursion — walk parent chain to count depth."""
+
     if node is None:
         return 0
     return 1 + count_commits(node.parent)
 
 
 def find_commit(root: Optional[Commit], commit_id: str) -> Optional[Commit]:
-    """Backtracking DFS — search entire commit tree."""
+
     if root is None:
         return None
     if root.commit_id == commit_id:
@@ -255,7 +246,7 @@ def find_commit(root: Optional[Commit], commit_id: str) -> Optional[Commit]:
 
 
 def find_in_history(node: Optional[Commit], commit_id: str) -> Optional[Commit]:
-    """Recursion — walk parent chain to find a specific commit."""
+
     if node is None:
         return None
     if node.commit_id == commit_id:
@@ -264,7 +255,7 @@ def find_in_history(node: Optional[Commit], commit_id: str) -> Optional[Commit]:
 
 
 def get_history_list(node: Optional[Commit]) -> List[Dict]:
-    """Recursion — collect commit history as a list (newest first)."""
+
     if node is None:
         return []
     result = [node.to_dict()]
