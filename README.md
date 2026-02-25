@@ -2,7 +2,8 @@
 
 A **web-based version control system** that simulates core Git functionality, built from scratch using fundamental **Data Structures & Algorithms**.
 
-> **Live Demo →** _[Add your deployed URL here]_
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-minigit--dsa.up.railway.app-00C7B7?style=for-the-badge&logo=railway&logoColor=white)](https://minigit-dsa.up.railway.app/)
+[![Built With](https://img.shields.io/badge/Built_With-FastAPI_+_Vanilla_JS-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://minigit-dsa.up.railway.app/docs)
 
 ---
 
