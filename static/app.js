@@ -3,16 +3,19 @@ const terminal = document.getElementById("terminal");
 const input = document.getElementById("input");
 const clearBtn = document.getElementById("clearBtn");
 const promptBranch = document.getElementById("promptBranch");
+const termTitle = document.getElementById("termTitle");
 
 let history = [];
 let histIdx = -1;
+
+// ── Input Handling ──────────────────────────────────
 
 input.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && input.value.trim()) {
         const cmd = input.value.trim();
         history.push(cmd);
         histIdx = history.length;
-        printLine("minigit❯ " + cmd, "cmd");
+        printLine(cmd, "cmd");
         handleCommand(cmd);
         input.value = "";
     }
@@ -27,18 +30,18 @@ input.addEventListener("keydown", (e) => {
     }
 });
 
-clearBtn.addEventListener("click", () => {
-    terminal.innerHTML = "";
-});
+clearBtn.addEventListener("click", () => { terminal.innerHTML = ""; });
 
 function run(cmd) {
-    input.value = cmd;
-    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    printLine(cmd, "cmd");
+    handleCommand(cmd);
 }
+
+// ── Output ──────────────────────────────────────────
 
 function printLine(text, cls = "info") {
     const div = document.createElement("div");
-    div.className = "output-line " + cls;
+    div.className = "line " + cls;
     div.textContent = text;
     terminal.appendChild(div);
     terminal.scrollTop = terminal.scrollHeight;
@@ -47,6 +50,8 @@ function printLine(text, cls = "info") {
 function printLines(lines, cls = "info") {
     lines.forEach((l) => printLine(l, cls));
 }
+
+// ── API ─────────────────────────────────────────────
 
 async function api(method, endpoint, body = null) {
     try {
@@ -59,30 +64,32 @@ async function api(method, endpoint, body = null) {
     }
 }
 
+// ── Command Router ──────────────────────────────────
+
 async function handleCommand(raw) {
     const parts = raw.split(" ");
     const cmd = parts[0].toLowerCase();
 
     switch (cmd) {
         case "help":
+            printLine("");
+            printLine("MiniGit Commands", "heading");
             printLines([
-                "",
-                "=== MiniGit Commands ===",
-                "  init                    Initialize repository",
-                "  add <file> <content>    Stage a file",
-                "  commit <message>        Commit staged files",
-                "  log                     Show commit history",
-                "  status                  Show working tree status",
-                "  diff <file>             Compare file with last commit",
-                "  branch <name>           Create a new branch",
-                "  checkout <name>         Switch to a branch",
-                "  branches                List all branches",
-                "  merge <branch>          Merge branch into current",
-                "  undo                    Undo last commit",
-                "  redo                    Redo undone commit",
-                "  revert <commit-id>      Revert to a specific commit",
-                "  clear                   Clear terminal",
-                "  help                    Show this help",
+                "  init                     Initialize repository",
+                "  add <file> <content>     Stage a file",
+                "  commit <message>         Commit staged files",
+                "  log                      Show commit history",
+                "  status                   Show working tree status",
+                "  diff <file>              Compare file with last commit",
+                "  branch <name>            Create a new branch",
+                "  checkout <name>          Switch to a branch",
+                "  branches                 List all branches",
+                "  merge <branch>           Merge branch into current",
+                "  undo                     Undo last commit",
+                "  redo                     Redo undone commit",
+                "  revert <commit-id>       Revert to a specific commit",
+                "  clear                    Clear terminal",
+                "  help                     Show this help",
                 "",
             ]);
             break;
@@ -103,7 +110,7 @@ async function handleCommand(raw) {
             const content = parts.slice(2).join(" ") || "(empty file)";
             if (!filename) { printLine("Usage: add <filename> <content>", "error"); break; }
             const r = await api("POST", "/add", { filename, content });
-            printLine(r.message + (r.hash ? "  [hash: " + r.hash + "]" : ""), r.success ? "success" : "error");
+            printLine(r.message + (r.hash ? "  [" + r.hash + "]" : ""), r.success ? "success" : "error");
             if (r.success) refreshAll();
             break;
         }
@@ -124,7 +131,8 @@ async function handleCommand(raw) {
             const r = await api("GET", "/log");
             if (!r.success) { printLine(r.message, "error"); break; }
             if (!r.commits || r.commits.length === 0) { printLine("No commits yet.", "info"); break; }
-            printLine("=== Commit History (" + r.branch + ") ===", "success");
+            printLine("");
+            printLine("Commit History (" + r.branch + ")", "heading");
             r.commits.forEach((c) => {
                 printLine("");
                 printLine("  commit " + c.id, "success");
@@ -133,25 +141,26 @@ async function handleCommand(raw) {
                 printLine("  Files:  " + c.fileCount, "info");
             });
             printLine("");
-            printLine("Total: " + r.total + " commit(s)", "info");
+            printLine("  Total: " + r.total + " commit(s)", "info");
             break;
         }
 
         case "status": {
             const r = await api("GET", "/status");
             if (!r.success) { printLine(r.message, "error"); break; }
-            printLine("On branch: " + r.branch, "success");
+            printLine("");
+            printLine("On branch: " + r.branch, "heading");
             if (r.staged.length > 0) {
-                printLine("\nStaged files:", "info");
-                r.staged.forEach((f) => printLine("  + " + f.name, "success"));
+                printLine("\n  Staged files:", "info");
+                r.staged.forEach((f) => printLine("    + " + f.name, "success"));
             }
-            printLine("\nWorking directory:", "info");
+            printLine("\n  Working directory:", "info");
             if (r.working.length === 0) {
-                printLine("  (empty)", "info");
+                printLine("    (empty)", "info");
             } else {
-                r.working.forEach((f) => printLine("  " + f.name + "  [" + f.hash + "]", "info"));
+                r.working.forEach((f) => printLine("    " + f.name + "  [" + f.hash + "]", "info"));
             }
-            printLine("\nUndo stack: " + r.undoCount + " | Redo stack: " + r.redoCount, "info");
+            printLine("\n  Undo: " + r.undoCount + "  Redo: " + r.redoCount, "info");
             break;
         }
 
@@ -161,10 +170,10 @@ async function handleCommand(raw) {
             const r = await api("POST", "/diff", { filename });
             printLine(r.message, r.success ? (r.status === "modified" ? "error" : "success") : "error");
             if (r.committedContent !== undefined) {
-                printLine("\n--- committed ---", "info");
-                printLine(r.committedContent, "info");
-                printLine("--- working ---", "info");
-                printLine(r.workingContent, "info");
+                printLine("\n  --- committed ---", "info");
+                printLine("  " + r.committedContent, "info");
+                printLine("  --- working ---", "info");
+                printLine("  " + r.workingContent, "info");
             }
             break;
         }
@@ -190,11 +199,12 @@ async function handleCommand(raw) {
         case "branches": {
             const r = await api("GET", "/branches");
             if (!r.success) { printLine(r.message, "error"); break; }
-            printLine("=== Branches ===", "success");
+            printLine("");
+            printLine("Branches", "heading");
             r.branches.forEach((b) => {
                 printLine(b.active ? "  * " + b.name + " (active)" : "    " + b.name, b.active ? "success" : "info");
             });
-            printLine("Total: " + r.total + " branch(es)", "info");
+            printLine("  Total: " + r.total + " branch(es)", "info");
             break;
         }
 
@@ -204,7 +214,7 @@ async function handleCommand(raw) {
             const r = await api("POST", "/merge", { branch });
             printLine(r.message, r.success ? "success" : "error");
             if (r.success) {
-                printLine("[" + r.commitId + "] " + r.fileCount + " file(s)", "info");
+                printLine("  [" + r.commitId + "] " + r.fileCount + " file(s)", "info");
                 refreshAll();
             }
             break;
@@ -230,7 +240,7 @@ async function handleCommand(raw) {
             const r = await api("POST", "/revert", { commit_id: commitId });
             printLine(r.message, r.success ? "success" : "error");
             if (r.success) {
-                printLine("New commit: [" + r.newCommitId + "]  " + r.fileCount + " file(s)", "info");
+                printLine("  New commit: [" + r.newCommitId + "]  " + r.fileCount + " file(s)", "info");
                 refreshAll();
             }
             break;
@@ -241,6 +251,8 @@ async function handleCommand(raw) {
     }
 }
 
+// ── Live Sidebar Updates ────────────────────────────
+
 async function refreshAll() {
     await Promise.all([refreshBranches(), refreshStatus(), refreshLog()]);
 }
@@ -248,17 +260,25 @@ async function refreshAll() {
 async function refreshBranches() {
     const r = await api("GET", "/branches");
     const el = document.getElementById("branchList");
-    if (!r.success || !r.branches) { el.innerHTML = '<li class="muted">No branches</li>'; return; }
+    if (!r.success || !r.branches || r.branches.length === 0) {
+        el.innerHTML = '<li class="empty-state">No branches</li>';
+        return;
+    }
     el.innerHTML = r.branches.map((b) =>
-        `<li class="${b.active ? "active" : ""}">${b.active ? "● " : "  "}${b.name}</li>`
+        '<li class="' + (b.active ? "active" : "") + '">' + b.name + '</li>'
     ).join("");
+
     const active = r.branches.find((b) => b.active);
-    if (active) promptBranch.textContent = active.name;
+    if (active) {
+        promptBranch.textContent = active.name;
+        termTitle.textContent = "terminal · " + active.name;
+    }
 }
 
 async function refreshStatus() {
     const r = await api("GET", "/status");
     if (!r.success) return;
+
     document.getElementById("sBranch").textContent = r.branch;
     document.getElementById("sStaged").textContent = r.staged.length;
     document.getElementById("sFiles").textContent = r.working.length;
@@ -267,10 +287,13 @@ async function refreshStatus() {
 
     const fl = document.getElementById("fileList");
     if (r.working.length === 0) {
-        fl.innerHTML = '<p class="muted">No files</p>';
+        fl.innerHTML = '<div class="empty-state">No files tracked</div>';
     } else {
         fl.innerHTML = r.working.map((f) =>
-            `<div class="file-item"><span>📄 ${f.name}</span><span class="file-hash">${f.hash}</span></div>`
+            '<div class="file-item">' +
+            '<span class="file-item__name">' + f.name + '</span>' +
+            '<span class="file-item__hash">' + f.hash.slice(0, 6) + '</span>' +
+            '</div>'
         ).join("");
     }
 }
@@ -279,18 +302,18 @@ async function refreshLog() {
     const r = await api("GET", "/log");
     const el = document.getElementById("commitGraph");
     if (!r.success || !r.commits || r.commits.length === 0) {
-        el.innerHTML = '<p class="muted">No commits yet</p>';
+        el.innerHTML = '<div class="empty-state">No commits yet</div>';
         return;
     }
     el.innerHTML = r.commits.map((c) =>
-        `<div class="commit-node">
-            <div>
-                <span class="commit-id">${c.id}</span><br>
-                <span class="commit-msg">${c.message}</span><br>
-                <span class="commit-time">${c.timestamp}</span>
-            </div>
-        </div>`
+        '<div class="commit-node">' +
+        '<span class="commit-id">' + c.id.slice(0, 7) + '</span>' +
+        '<div class="commit-msg">' + c.message + '</div>' +
+        '<div class="commit-time">' + c.timestamp + '</div>' +
+        '</div>'
     ).join("");
 }
 
+// Auto-focus input
 input.focus();
+document.addEventListener("click", () => input.focus());
