@@ -9,5 +9,29 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Render URL
-        run: curl -s https://mini-git-dsa.onrender.com/ > /dev/null
+      - name: Ping Render (Round 1)
+        run: |
+          echo "Pinging Render at $(date -u)"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://mini-git-dsa.onrender.com/)
+          echo "Response: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "WARNING: Got $STATUS, retrying in 30s..."
+            sleep 30
+            curl -s -o /dev/null https://mini-git-dsa.onrender.com/
+          fi
+
+      - name: Wait 5 minutes
+        run: sleep 300
+
+      - name: Ping Render (Round 2)
+        run: |
+          echo "Pinging Render at $(date -u)"
+          curl -s -o /dev/null https://mini-git-dsa.onrender.com/
+
+      - name: Wait 5 minutes
+        run: sleep 300
+
+      - name: Ping Render (Round 3)
+        run: |
+          echo "Pinging Render at $(date -u)"
+          curl -s -o /dev/null https://mini-git-dsa.onrender.com/
