@@ -18,9 +18,11 @@ A **web-based version control system** that simulates core Git functionality, bu
 
 - **Built a fully functional VCS** with branching, merging, undo/redo, and commit history
 - **7 core DSA concepts** implemented from scratch — no external libraries for any data structure
-- **REST API** with 13 endpoints using FastAPI
+- **DAG-based commit history** — same structure real Git uses internally
+- **Multi-Repository support** — create, switch, and manage multiple named repositories
+- **REST API** with 17 endpoints using FastAPI
 - **Interactive terminal UI** that mimics a real Git CLI in the browser
-- **Deployable** on Railway / Render with zero config
+- **Deployable** on Render with zero config + UptimeRobot keepalive
 
 ---
 
@@ -28,7 +30,7 @@ A **web-based version control system** that simulates core Git functionality, bu
 
 | DSA Concept | Where It's Used | Implementation |
 |---|---|---|
-| **Binary Tree** | Commit history — each commit points to parent + children | `Commit` class with parent/children pointers |
+| **DAG (Directed Acyclic Graph)** | Commit history — merge commits connect separate branch histories | `Commit` class with parent/children pointers |
 | **Stack** | Undo / Redo operations | Custom `CommitStack` (push, pop, peek) |
 | **Linked List** | Branch tracking — branches form a singly linked list | `Branch` nodes with `next` pointer, `BranchList` |
 | **Hashing** | File state identification — detect changes between versions | Polynomial rolling hash → 8-char hex string |
@@ -50,7 +52,7 @@ A **web-based version control system** that simulates core Git functionality, bu
 ┌───────────────────────▼──────────────────────────┐
 │                  FastAPI Server                   │
 │                    main.py                        │
-│              (13 REST Endpoints)                  │
+│              (17 REST Endpoints)                  │
 └───────────────────────┬──────────────────────────┘
                         │
 ┌───────────────────────▼──────────────────────────┐
@@ -75,10 +77,16 @@ A **web-based version control system** that simulates core Git functionality, bu
 | `POST` | `/api/branch` | Create a new branch |
 | `POST` | `/api/checkout` | Switch to a branch |
 | `GET` | `/api/branches` | List all branches |
-| `POST` | `/api/merge` | Merge branch into current |
+| `POST` | `/api/merge` | Merge branch into current (source-wins) |
 | `POST` | `/api/undo` | Undo last commit (stack pop) |
 | `POST` | `/api/redo` | Redo undone commit (stack push) |
 | `POST` | `/api/revert` | Revert to specific commit (DFS search) |
+| `POST` | `/api/reset` | Reset all repositories |
+| `POST` | `/api/repo/create` | Create a new named repository |
+| `POST` | `/api/repo/switch` | Switch active repository |
+| `GET` | `/api/repos` | List all repositories |
+| `DELETE` | `/api/repo/delete` | Delete a repository |
+| `GET` | `/health` | Health check (UptimeRobot) |
 
 > Interactive Swagger docs available at `/docs`
 
@@ -113,8 +121,8 @@ uvicorn main:app --host 0.0.0.0 --port $PORT
 
 ```
 minigit-api/
-├── main.py            # FastAPI app — 13 REST endpoints
-├── models.py          # DSA: Tree, Stack, LinkedList, Hash, Array, Recursion, Backtracking
+├── main.py            # FastAPI app — 17 REST endpoints + multi-repo registry
+├── models.py          # DSA: DAG, Stack, LinkedList, Hash, Array, Recursion, Backtracking
 ├── storage.py         # JSON persistence layer
 ├── requirements.txt   # Python dependencies
 ├── Procfile           # Deployment start command
