@@ -15,6 +15,11 @@ from storage import load_data, save_data
 app = FastAPI(title="MiniGit API", version="1.0")
 
 
+@app.api_route("/health", methods=["GET", "HEAD"])
+def health_check():
+    return {"status": "ok"}
+
+
 class MiniGitState:
     def __init__(self):
         self.working_files = FileState()
