@@ -26,6 +26,9 @@ class RevertRequest(BaseModel):
 class DiffRequest(BaseModel):
     filename: str
 
+class RepoRequest(BaseModel):
+    name: str
+
 
 class File:
 

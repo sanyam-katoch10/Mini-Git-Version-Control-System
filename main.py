@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from models import (
     AddRequest, CommitRequest, BranchRequest, CheckoutRequest,
-    MergeRequest, RevertRequest, DiffRequest,
+    MergeRequest, RevertRequest, DiffRequest, RepoRequest,
     FileState, Commit, CommitStack, BranchList,
     generate_hash, get_timestamp,
     count_commits, find_commit, find_in_history, get_history_list,
@@ -21,7 +21,8 @@ def health_check():
 
 
 class MiniGitState:
-    def __init__(self):
+    def __init__(self, name: str = "default"):
+        self.name = name
         self.working_files = FileState()
         self.staging_area = FileState()
         self.branches = BranchList()
@@ -30,12 +31,60 @@ class MiniGitState:
         self.root_commit = None
         self.initialized = False
 
-git = MiniGitState()
+repos = {"default": MiniGitState("default")}
+active_repo_name = "default"
 
+def get_git():
+    return repos[active_repo_name]
+
+
+
+@app.post("/api/repo/create")
+def create_repo(req: RepoRequest):
+    if req.name in repos:
+        return {"success": False, "message": f"Repository '{req.name}' already exists."}
+    repos[req.name] = MiniGitState(req.name)
+    return {"success": True, "message": f"Created repository: {req.name}", "repo": req.name}
+
+
+@app.post("/api/repo/switch")
+def switch_repo(req: RepoRequest):
+    global active_repo_name
+    if req.name not in repos:
+        return {"success": False, "message": f"Repository '{req.name}' not found."}
+    active_repo_name = req.name
+    git = get_git()
+    branch = git.branches.active.name if git.branches.active else "none"
+    return {"success": True, "message": f"Switched to repo: {req.name}", "repo": req.name, "branch": branch}
+
+
+@app.get("/api/repos")
+def list_repos():
+    result = []
+    for name, r in repos.items():
+        result.append({
+            "name": name,
+            "active": name == active_repo_name,
+            "initialized": r.initialized,
+            "branch": r.branches.active.name if r.branches.active else None,
+        })
+    return {"success": True, "repos": result, "total": len(repos)}
+
+
+@app.delete("/api/repo/delete")
+def delete_repo(req: RepoRequest):
+    global active_repo_name
+    if req.name not in repos:
+        return {"success": False, "message": f"Repository '{req.name}' not found."}
+    if req.name == active_repo_name:
+        return {"success": False, "message": "Cannot delete the active repository. Switch first."}
+    del repos[req.name]
+    return {"success": True, "message": f"Deleted repository: {req.name}"}
 
 
 @app.post("/api/init")
 def init_repo():
+    git = get_git()
     if git.initialized:
         return {"success": False, "message": "Repository already initialized."}
     git.branches.add_branch("main", None)
@@ -49,6 +98,7 @@ def init_repo():
 
 @app.post("/api/add")
 def add_file(req: AddRequest):
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized. Run 'init' first."}
 
@@ -66,6 +116,7 @@ def add_file(req: AddRequest):
 
 @app.post("/api/commit")
 def commit_files(req: CommitRequest):
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
     if git.staging_area.file_count == 0:
@@ -106,6 +157,7 @@ def commit_files(req: CommitRequest):
 
 @app.get("/api/log")
 def get_log():
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
     current = git.branches.active
@@ -124,6 +176,7 @@ def get_log():
 
 @app.get("/api/status")
 def get_status():
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -139,6 +192,7 @@ def get_status():
     return {
         "success": True,
         "branch": git.branches.active.name,
+        "repo": active_repo_name,
         "staged": staged,
         "working": working,
         "undoCount": git.undo_stack.size(),
@@ -148,6 +202,7 @@ def get_status():
 
 @app.post("/api/diff")
 def diff_file(req: DiffRequest):
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -203,6 +258,7 @@ def diff_file(req: DiffRequest):
 
 @app.post("/api/branch")
 def create_branch(req: BranchRequest):
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
     if git.branches.find_branch(req.name) is not None:
@@ -215,6 +271,7 @@ def create_branch(req: BranchRequest):
 
 @app.post("/api/checkout")
 def checkout_branch(req: CheckoutRequest):
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -234,6 +291,7 @@ def checkout_branch(req: CheckoutRequest):
 
 @app.get("/api/branches")
 def list_branches():
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -246,6 +304,7 @@ def list_branches():
 
 @app.post("/api/merge")
 def merge_branch(req: MergeRequest):
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -266,17 +325,22 @@ def merge_branch(req: MergeRequest):
 
     if git.branches.active.head is not None:
         merge_commit.snapshot = git.branches.active.head.snapshot.copy()
+    else:
+        merge_commit.snapshot = FileState()
 
     for f in src.head.snapshot.files:
-        if merge_commit.snapshot.get_file(f.name) is None:
-            merge_commit.snapshot.add_file(f.name, f.content)
+        merge_commit.snapshot.add_file(f.name, f.content)
 
     merge_commit.parent = git.branches.active.head
     if git.branches.active.head is not None:
         git.branches.active.head.children.append(merge_commit)
 
+    if git.root_commit is None:
+        git.root_commit = merge_commit
+
     git.branches.active.head = merge_commit
     git.working_files = merge_commit.snapshot.copy()
+    git.staging_area = FileState()
     git.undo_stack.push(merge_commit)
     git.redo_stack.clear()
 
@@ -292,6 +356,7 @@ def merge_branch(req: MergeRequest):
 
 @app.post("/api/undo")
 def undo():
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
     if git.undo_stack.is_empty():
@@ -319,6 +384,7 @@ def undo():
 
 @app.post("/api/redo")
 def redo():
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
     if git.redo_stack.is_empty():
@@ -338,6 +404,7 @@ def redo():
 
 @app.post("/api/revert")
 def revert(req: RevertRequest):
+    git = get_git()
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -380,10 +447,11 @@ def revert(req: RevertRequest):
 
 @app.post("/api/reset")
 def reset_repo():
-    global git
-    git = MiniGitState()
+    global repos, active_repo_name
+    repos = {"default": MiniGitState("default")}
+    active_repo_name = "default"
     save_data([])
-    return {"success": True, "message": "Repository reset."}
+    return {"success": True, "message": "All repositories reset."}
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

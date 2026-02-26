@@ -8,7 +8,6 @@ const termTitle = document.getElementById("termTitle");
 let history = [];
 let histIdx = -1;
 
-// ── Input Handling ──────────────────────────────────
 
 input.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && input.value.trim()) {
@@ -88,6 +87,12 @@ async function handleCommand(raw) {
                 "  undo                     Undo last commit",
                 "  redo                     Redo undone commit",
                 "  revert <commit-id>       Revert to a specific commit",
+                "",
+                "  repo create <name>       Create a new repository",
+                "  repo switch <name>       Switch to a repository",
+                "  repos                    List all repositories",
+                "  repo delete <name>       Delete a repository",
+                "",
                 "  clear                    Clear terminal",
                 "  help                     Show this help",
                 "",
@@ -97,6 +102,23 @@ async function handleCommand(raw) {
         case "clear":
             terminal.innerHTML = "";
             break;
+
+        case "repo":
+            await handleRepoCommand(parts);
+            break;
+
+        case "repos": {
+            const r = await api("GET", "/repos");
+            if (!r.success) { printLine(r.message, "error"); break; }
+            printLine("");
+            printLine("Repositories", "heading");
+            r.repos.forEach((rp) => {
+                const status = rp.initialized ? rp.branch || "no branch" : "not initialized";
+                printLine(rp.active ? "  * " + rp.name + " (" + status + ")" : "    " + rp.name + " (" + status + ")", rp.active ? "success" : "info");
+            });
+            printLine("  Total: " + r.total + " repo(s)", "info");
+            break;
+        }
 
         case "init": {
             const r = await api("POST", "/init");
@@ -251,7 +273,36 @@ async function handleCommand(raw) {
     }
 }
 
-// ── Live Sidebar Updates ────────────────────────────
+async function handleRepoCommand(parts) {
+    const sub = parts[1] ? parts[1].toLowerCase() : "";
+    const name = parts[2];
+
+    switch (sub) {
+        case "create": {
+            if (!name) { printLine("Usage: repo create <name>", "error"); return; }
+            const r = await api("POST", "/repo/create", { name });
+            printLine(r.message, r.success ? "success" : "error");
+            break;
+        }
+        case "switch": {
+            if (!name) { printLine("Usage: repo switch <name>", "error"); return; }
+            const r = await api("POST", "/repo/switch", { name });
+            printLine(r.message, r.success ? "success" : "error");
+            if (r.success) refreshAll();
+            break;
+        }
+        case "delete": {
+            if (!name) { printLine("Usage: repo delete <name>", "error"); return; }
+            const r = await api("DELETE", "/repo/delete", { name });
+            printLine(r.message, r.success ? "success" : "error");
+            break;
+        }
+        default:
+            printLine("Usage: repo create|switch|delete <name>", "error");
+    }
+}
+
+
 
 async function refreshAll() {
     await Promise.all([refreshBranches(), refreshStatus(), refreshLog()]);
@@ -269,9 +320,14 @@ async function refreshBranches() {
     ).join("");
 
     const active = r.branches.find((b) => b.active);
+    const sr = await api("GET", "/status");
+    const repoName = sr.repo || "default";
     if (active) {
-        promptBranch.textContent = active.name;
-        termTitle.textContent = "terminal · " + active.name;
+        promptBranch.textContent = repoName + ":" + active.name;
+        termTitle.textContent = "terminal · " + repoName + ":" + active.name;
+    } else {
+        promptBranch.textContent = repoName;
+        termTitle.textContent = "terminal · " + repoName;
     }
 }
 
@@ -314,6 +370,6 @@ async function refreshLog() {
     ).join("");
 }
 
-// Auto-focus input
+
 input.focus();
 document.addEventListener("click", () => input.focus());
