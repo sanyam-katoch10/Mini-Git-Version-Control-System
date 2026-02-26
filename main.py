@@ -31,20 +31,24 @@ class MiniGitState:
         self.root_commit = None
         self.initialized = False
 
-repos = {"default": MiniGitState("default")}
-active_repo_name = "default"
+repos = {}
+active_repo_name = None
 
 def get_git():
+    if active_repo_name is None or active_repo_name not in repos:
+        return None
     return repos[active_repo_name]
 
 
 
 @app.post("/api/repo/create")
 def create_repo(req: RepoRequest):
+    global active_repo_name
     if req.name in repos:
         return {"success": False, "message": f"Repository '{req.name}' already exists."}
     repos[req.name] = MiniGitState(req.name)
-    return {"success": True, "message": f"Created repository: {req.name}", "repo": req.name}
+    active_repo_name = req.name
+    return {"success": True, "message": f"Created and switched to repository: {req.name}", "repo": req.name}
 
 
 @app.post("/api/repo/switch")
@@ -85,13 +89,15 @@ def delete_repo(req: RepoRequest):
 @app.post("/api/init")
 def init_repo():
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if git.initialized:
         return {"success": False, "message": "Repository already initialized."}
     git.branches.add_branch("main", None)
     git.initialized = True
     return {
         "success": True,
-        "message": "Initialized empty MiniGit repository.",
+        "message": f"Initialized empty MiniGit repository '{git.name}'.",
         "branch": "main",
     }
 
@@ -99,6 +105,8 @@ def init_repo():
 @app.post("/api/add")
 def add_file(req: AddRequest):
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized. Run 'init' first."}
 
@@ -117,6 +125,8 @@ def add_file(req: AddRequest):
 @app.post("/api/commit")
 def commit_files(req: CommitRequest):
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
     if git.staging_area.file_count == 0:
@@ -158,6 +168,8 @@ def commit_files(req: CommitRequest):
 @app.get("/api/log")
 def get_log():
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
     current = git.branches.active
@@ -177,6 +189,8 @@ def get_log():
 @app.get("/api/status")
 def get_status():
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -203,6 +217,8 @@ def get_status():
 @app.post("/api/diff")
 def diff_file(req: DiffRequest):
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -259,6 +275,8 @@ def diff_file(req: DiffRequest):
 @app.post("/api/branch")
 def create_branch(req: BranchRequest):
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
     if git.branches.find_branch(req.name) is not None:
@@ -272,6 +290,8 @@ def create_branch(req: BranchRequest):
 @app.post("/api/checkout")
 def checkout_branch(req: CheckoutRequest):
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -292,6 +312,8 @@ def checkout_branch(req: CheckoutRequest):
 @app.get("/api/branches")
 def list_branches():
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -305,6 +327,8 @@ def list_branches():
 @app.post("/api/merge")
 def merge_branch(req: MergeRequest):
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -357,6 +381,8 @@ def merge_branch(req: MergeRequest):
 @app.post("/api/undo")
 def undo():
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
     if git.undo_stack.is_empty():
@@ -385,6 +411,8 @@ def undo():
 @app.post("/api/redo")
 def redo():
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
     if git.redo_stack.is_empty():
@@ -405,6 +433,8 @@ def redo():
 @app.post("/api/revert")
 def revert(req: RevertRequest):
     git = get_git()
+    if git is None:
+        return {"success": False, "message": "No repository selected. Run 'repo create <name>' first."}
     if not git.initialized:
         return {"success": False, "message": "Error: repo not initialized."}
 
@@ -448,8 +478,8 @@ def revert(req: RevertRequest):
 @app.post("/api/reset")
 def reset_repo():
     global repos, active_repo_name
-    repos = {"default": MiniGitState("default")}
-    active_repo_name = "default"
+    repos = {}
+    active_repo_name = None
     save_data([])
     return {"success": True, "message": "All repositories reset."}
 

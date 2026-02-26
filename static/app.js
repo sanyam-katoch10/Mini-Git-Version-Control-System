@@ -74,10 +74,13 @@ async function handleCommand(raw) {
             printLine("");
             printLine("MiniGit Commands", "heading");
             printLines([
+                "  repo create <name>       Create a new repository",
                 "  init                     Initialize repository",
                 "  add <file> <content>     Stage a file",
                 "  commit <message>         Commit staged files",
                 "  log                      Show commit history",
+                "  repo switch <name>       Switch to a repository",
+                "  repos                    List all repositories",
                 "  status                   Show working tree status",
                 "  diff <file>              Compare file with last commit",
                 "  branch <name>            Create a new branch",
@@ -87,12 +90,7 @@ async function handleCommand(raw) {
                 "  undo                     Undo last commit",
                 "  redo                     Redo undone commit",
                 "  revert <commit-id>       Revert to a specific commit",
-                "",
-                "  repo create <name>       Create a new repository",
-                "  repo switch <name>       Switch to a repository",
-                "  repos                    List all repositories",
                 "  repo delete <name>       Delete a repository",
-                "",
                 "  clear                    Clear terminal",
                 "  help                     Show this help",
                 "",
