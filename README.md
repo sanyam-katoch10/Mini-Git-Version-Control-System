@@ -18,7 +18,7 @@ A **web-based version control system** that simulates core Git functionality, bu
 
 - **Built a fully functional VCS** with branching, merging, undo/redo, and commit history
 - **7 core DSA concepts** implemented from scratch — no external libraries for any data structure
-- **DAG-based commit history** — same structure real Git uses internally
+- **Binary Tree commit history** — same structure real Git uses internally
 - **Multi-Repository support** — create, switch, and manage multiple named repositories
 - **REST API** with 17 endpoints using FastAPI
 - **Interactive terminal UI** that mimics a real Git CLI in the browser
@@ -30,7 +30,7 @@ A **web-based version control system** that simulates core Git functionality, bu
 
 | DSA Concept | Where It's Used | Implementation |
 |---|---|---|
-| **DAG (Directed Acyclic Graph)** | Commit history — merge commits connect separate branch histories | `Commit` class with parent/children pointers |
+| **Binary Tree** | Commit history + merge — each commit points to parent + children, merge creates new tree nodes | `Commit` class with parent/children pointers |
 | **Stack** | Undo / Redo operations | Custom `CommitStack` (push, pop, peek) |
 | **Linked List** | Branch tracking — branches form a singly linked list | `Branch` nodes with `next` pointer, `BranchList` |
 | **Hashing** | File state identification — detect changes between versions | Polynomial rolling hash → 8-char hex string |
@@ -122,7 +122,7 @@ uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 minigit-api/
 ├── main.py            # FastAPI app — 17 REST endpoints + multi-repo registry
-├── models.py          # DSA: DAG, Stack, LinkedList, Hash, Array, Recursion, Backtracking
+├── models.py          # DSA: Tree, Stack, LinkedList, Hash, Array, Recursion, Backtracking
 ├── storage.py         # JSON persistence layer
 ├── requirements.txt   # Python dependencies
 ├── Procfile           # Deployment start command
